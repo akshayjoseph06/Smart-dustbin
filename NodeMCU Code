@@ -1,0 +1,128 @@
+//by Akshay Joseph , akshayjosep666@gmail.com
+
+//Garbage level sensor pins : trig - D2 , echo - D3
+//Servo motor control snsor : trig - D4 , echo - D5
+//Servo pin - D1
+//LED pin - D0
+#define BLYNK_PRINT Serial
+#define trigPin  D2
+#define echoPin  D3
+#include <SoftwareSerial.h>
+#include <ESP8266WiFi.h>
+#include <BlynkSimpleEsp8266.h>
+#include <Servo.h>
+Servo myservo;  
+int pos = 20;  
+const int trigPin1 = D4;
+const int echoPin1 = D5;
+const int led = D0;
+
+long duration1;
+float distance1;
+
+char auth[] = "yourblynkauthhere"; // You should get Auth Token in the Blynk App.
+
+// Your WiFi credentials.
+// Set password to "" for open networks.
+char ssid[] = "yourssidhere";
+char pass[] = "yourpasswordhere";
+BlynkTimer timer;
+
+void myTimerEvent()
+{
+ 
+}
+
+void CheckDistance()
+{
+long cm,duration, inches;
+pinMode(trigPin, OUTPUT);
+digitalWrite(trigPin, LOW);
+delayMicroseconds(2);
+digitalWrite(trigPin, HIGH);
+delayMicroseconds(10);
+digitalWrite(trigPin, LOW);
+pinMode(echoPin, INPUT);
+duration = pulseIn(echoPin, HIGH);
+inches = microsecondsToInches(duration);
+cm = microsecondsToCentimeters(duration);
+Serial.print(inches);
+Serial.print("in ");
+Serial.println(cm);
+Blynk.virtualWrite(V5, inches);
+//Check whether Bin is full or not
+if(inches < 2)
+{
+Blynk.virtualWrite(V3, 255);
+Blynk.notify(" Full!!");
+
+
+
+
+//display
+}
+delay(1000);
+}
+long microsecondsToCentimeters(long microseconds) {
+
+  return microseconds / 29 / 2;
+}
+
+long microsecondsToInches(long microseconds) {
+ 
+  return microseconds / 74 / 2;
+}
+
+
+
+void setup()
+{
+  // Debug console
+  Serial.begin(9600);
+
+  Blynk.begin(auth, ssid, pass);
+  // You can also specify server:
+  //Blynk.begin(auth, ssid, pass, "blynk-cloud.com", 80);
+  //Blynk.begin(auth, ssid, pass, IPAddress(192,168,1,100), 8080);
+ timer.setInterval(3000, CheckDistance);
+
+  myservo.attach(D1);
+  pinMode(trigPin1, OUTPUT);
+  pinMode(echoPin1, INPUT); 
+  pinMode(led, OUTPUT);
+  myservo.write(pos);
+}
+
+void loop()
+{
+  Blynk.run();
+timer.run();
+automation();
+}
+
+void automation() 
+{
+  //Serial.begin(9600);
+  digitalWrite(trigPin1, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin1, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin1, LOW);
+
+  duration1 = pulseIn(echoPin1, HIGH);
+  distance1 = 0.034*((duration1)/2);
+  //Serial.println(distance1);
+  if (distance1 < 27)
+  {
+    digitalWrite(led,HIGH);
+    myservo.write(pos+160);
+    delay(1000);
+  }
+  else 
+  {
+    digitalWrite(led,LOW);
+      myservo.write(pos);
+  }
+  delay(300);
+}
+
